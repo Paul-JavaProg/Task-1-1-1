@@ -1,4 +1,4 @@
-package JavaFundamentals;
+
 
 public class Methods {
     
