@@ -55,17 +55,14 @@ public class Banking {
             if (loggedInUsers == null) {
                 System.out.println("Welcome Good Day!");
                 System.out.println("1. Log In");
-                System.out.println("2. Create New User");
-                System.out.println("3. Exit");
+                System.out.println("2. Exit");
                 System.out.print("Choose option: ");
     
                 int option = getValidatedInt(input);
     
                 if (option == 1) 
                     login(input);
-                else if(option == 2)
-                    registerUser(input);
-                else if (option == 3)
+                else if (option == 2)
                     System.out.println("Thankyou for using Banking App. Goodbye!");
                 else{
                     System.out.println("Try Again");
@@ -73,7 +70,7 @@ public class Banking {
             }
     
             else{
-                System.out.println("How Can I Help You Today");
+                System.out.println("Hi! "+ loggedInUsers.getName() + " How Can I Help You Today?");
                 System.out.println("1. Withdraw");
                 System.out.println("2. Check Balance");
                 System.out.println("3. Cash In");
@@ -114,8 +111,8 @@ public class Banking {
             }
                 
             } 
-            catch (InputMismatchException e) {
-                System.out.println("Invalid Input. Please input numbers only");
+            catch (NumberFormatException e) {
+                System.out.println("Invalid Input. Please input numbers only!");
                 input.nextLine();
             }
 
@@ -135,44 +132,17 @@ private static void login(Scanner input) {
 
         if(user.getId() == id && user.getPin() == pin){
             loggedInUsers = user;
-            System.out.println("Welcome "+ user.getName() + "!");
+            //System.out.println("Welcome "+ user.getName() + "!");
             return;
-        }
-        
+        } 
     }
-    System.out.println("Invalid Pin or Id. Try Again");
-    
-}
-//Creating New Users
-private static void registerUser(Scanner input){
-    System.out.println("Enter new user ID: ");
-    int id = getValidatedInt(input);
-
-    for (Users user : users) {
-        if(user.getId() == id){
-            System.out.println("ID Already exist!. Try Again");
-            return;
-        }
-        
-    }
-    System.out.print("Enter Pin: ");
-    int pin = getValidatedInt(input);
-
-    System.out.print("Enter User Name: ");
-    input.nextLine();
-    String name = input.nextLine();
-
-    System.out.print("Enter Balance: ");
-    double balance = getValidatedDouble(input);
-
-    Users newUsers = new Users(id, pin, name, balance);
-    users.add(newUsers);
-
-    System.out.println("Registered Successfully");
-}
+    System.out.println("Invalid Pin or Id. Try Again");  
+}   
 private static void withdraw(Scanner input){
-    System.out.println("Enter amount to withdraw: ");
-    double amount = getValidatedDouble(input);
+
+    try {
+        System.out.print("Enter amount to withdraw: ");
+        double amount = getValidatedDouble(input);
 
     if (amount <= 0) {
         System.out.println("Invalid amount. Please enter a valid amount! "); 
@@ -180,22 +150,30 @@ private static void withdraw(Scanner input){
     }
     if (amount > loggedInUsers.getBalance()){
         System.out.println("Insufficient amount. Transacton failed!");
+        return;
     }
     double newBalance = loggedInUsers.getBalance() - amount;
     loggedInUsers.setBalance(newBalance);
 
-    LocalDateTime now = LocalDateTime.now();
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    String formatedTimeDate = now.format(formatter);
-
-    String log = "Withdraw: " + amount + "|New Balance: " + newBalance + " | " + formatedTimeDate;
+    String log = "Withdraw: " + amount + "|New Balance: " + newBalance + " | " + getCurrentTimeDate();
     loggedInUsers.addTransaction(log);
+
+    System.out.println("Witdrawal Successful!. New balance " + newBalance);
+        
+    } catch (InputMismatchException e) {
+        System.out.println("Invalid input. Please input a valid amount");
+        input.nextLine();
+    }
+    catch (Exception e){
+        System.out.println("An error occures " + e.getMessage());
+
+    }
+    
 }
 
 //Creating Method for Checking Balance
 private static void checkBalance() {
         System.out.println("Hello " + loggedInUsers.getName() +" Your balance is $" + loggedInUsers.getBalance());
-
     }
 
 //Creating Method for Cash In
@@ -209,14 +187,10 @@ private static void cashIn(Scanner input){
         return;
     }
 
-    LocalDateTime now = LocalDateTime.now();
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    String formatedTimeDate = now.format(formatter);
-
     double newBalance = loggedInUsers.getBalance() + amount;
     loggedInUsers.setBalance(newBalance);
 
-    String log = "Cash In: $" + amount + "|New Balance: $" + newBalance + " | " + formatedTimeDate;
+    String log = "Cash In: $" + amount + "|New Balance: $" + newBalance + " | " + getCurrentTimeDate();
     loggedInUsers.addTransaction(log);
 
     System.out.println("Deposited Successfuly. New Balance: $" + loggedInUsers.getBalance());
@@ -243,19 +217,14 @@ private static void moneyTransfer(Scanner input){
         if (user.getId() == idReceipient){
             receipientFound = true;
 
-            LocalDateTime now = LocalDateTime.now();
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            String formatedDateTime = now.format(formatter);
-
-
             if(loggedInUsers.getBalance() >= amount){
                 loggedInUsers.setBalance(loggedInUsers.getBalance() - amount);
                 user.setBalance(user.getBalance() + amount);
 
-                String senderLog = "Transfer: $" + amount + " to " + user.getName() + " |New Balance: $" + loggedInUsers.getBalance() + " | " + formatedDateTime;
+                String senderLog = "Transfer: $" + amount + " to " + user.getName() + " |New Balance: $" + loggedInUsers.getBalance() + " | " + getCurrentTimeDate();
                 loggedInUsers.addTransaction(senderLog);
 
-                String reciepientLog = "Transfer: $" + amount + " from " + loggedInUsers.getName() + " |New Balance: $" + user.getBalance() + " | "  + formatedDateTime;
+                String reciepientLog = "Transfer: $" + amount + " from " + loggedInUsers.getName() + " |New Balance: $" + user.getBalance() + " | "  + getCurrentTimeDate();
                 user.addTransaction(reciepientLog);
 
                 System.out.println("Transferred $" + amount + " to " + user.getName());
@@ -272,10 +241,17 @@ private static void moneyTransfer(Scanner input){
     }
 
 }
+private static String getCurrentTimeDate(){
+
+    LocalDateTime now = LocalDateTime.now();
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    return now.format(formatter);
+
+}
 
 //Creating Method for Viewing Transactions
 private static void viewTransactionHistory(){
-    System.out.println("Transaction History for " + loggedInUsers.getName() + " Break it down yow! hahah");
+    System.out.println("Transaction History for " + loggedInUsers.getName() + " Breakdown");
     System.out.println("----------------------");
 
     if (loggedInUsers.getTransactionHistory().isEmpty()) {
@@ -331,7 +307,7 @@ private static int getValidatedInt(Scanner input){
         try {
             return input.nextInt();
         } catch (InputMismatchException e) {
-            System.out.print("Invalid input. Please input a valid number: ");
+            System.out.print("Invalid input!. Please input a valid number: ");
             input.nextLine();
         }  
     }   
@@ -341,11 +317,12 @@ private static double getValidatedDouble(Scanner input){
         try {
             return input.nextDouble();
         } catch (InputMismatchException e) {
-            System.out.print("Invalid input. Please input a valid number: ");
-            input.nextDouble();
+            System.out.print("Invalid input!. Please input a valid number: ");
+            input.nextLine();
             }
         }
     }
+
 }
     
 
